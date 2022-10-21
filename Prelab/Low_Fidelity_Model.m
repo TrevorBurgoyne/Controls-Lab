@@ -169,7 +169,7 @@ for i=1:length(damping_arr)
     sim('QuadPID',[0 Tf]);
 
     % Plot results
-    display_name = data.name
+    display_name = data.name;
 %     display_name = data.name + ": Kd=" + Kd + " Kp=" + Kp + " Ki=" + Ki + " zeta=" + zeta + " wn=" + wn;
     colors = ["red", "blue", "black"];
     styles = ["--", "-.", ":"];
@@ -202,7 +202,7 @@ for i=1:length(damping_arr)
 
     end
     ts = damping_arr(i).tsim(idx);
-    line_name = data.name + " 5% Settling Time"
+    line_name = data.name + " 5% Settling Time";
 %     line_name = data.name + " 5% Settling Time: " + ts + "s";
     x = [ts ts];
     y = [0 damping_arr(i).h(idx)];
