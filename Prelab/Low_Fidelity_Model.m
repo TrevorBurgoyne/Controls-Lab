@@ -169,7 +169,8 @@ for i=1:length(damping_arr)
     sim('QuadPID',[0 Tf]);
 
     % Plot results
-    display_name = data.name + ": Kd=" + Kd + " Kp=" + Kp + " Ki=" + Ki + " zeta=" + zeta + " wn=" + wn;
+    display_name = data.name
+%     display_name = data.name + ": Kd=" + Kd + " Kp=" + Kp + " Ki=" + Ki + " zeta=" + zeta + " wn=" + wn;
     colors = ["red", "blue", "black"];
     styles = ["--", "-.", ":"];
     figure(1);
@@ -186,27 +187,30 @@ for i=1:length(damping_arr)
     damping_arr(i).tsim = [damping_arr(i).tsim tsim];
     damping_arr(i).h = [damping_arr(i).h h];
 
-%     for j = 1:length(damping_arr(i).h)
-%         if (damping_arr(i).h(j)/hdesf >= 0.95)
-%             line_name = data.name + " Settling Time: " + damping_arr(i).tsim(j) + "s";
-%             x = [damping_arr(i).tsim(j) damping_arr(i).tsim(j)];
-%             y = [0 damping_arr(i).h(j)];
-%             line(x, y, 'color', colors(i), 'DisplayName', line_name)
-%             break;
-%         end
-%     end
     switch zeta
-        case ZETAS(1) % 0.1
-            ts = -log(.05 * sqrt(1-zeta^2))/(zeta*wn);
+        case ZETAS(1) % 0.1, Underdamped case
+            ts = 3/(zeta*wn);
             idxs = find(damping_arr(1).tsim >= ts);
-            line_name = data.name + " 5% Settling Time: " + ts + "s";
-            x = [ts ts];
-            y = [0 damping_arr(i).h(idxs(1))];
-            line(x, y, 'color', colors(i), 'DisplayName', line_name)
-        otherwise
-            disp('idk man')
+            idx = idxs(1);
+        otherwise % Other cases
+            for j = 1:length(damping_arr(i).h)
+                if (damping_arr(i).h(j)/hdesf >= 0.95)
+                    idx = j;
+                    break;
+                end
+            end
+
     end
-%     figure(2);
+    ts = damping_arr(i).tsim(idx);
+    line_name = data.name + " 5% Settling Time"
+%     line_name = data.name + " 5% Settling Time: " + ts + "s";
+    x = [ts ts];
+    y = [0 damping_arr(i).h(idx)];
+    line(x, y, 'color', colors(i), 'DisplayName', line_name)
+
+
+
+
 %     hold on
 %     plot(tsim, hdot, styles(i), 'color', colors(i), 'DisplayName', data.name);
 %     xlabel('Time, sec');
