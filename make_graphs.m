@@ -72,8 +72,8 @@ function [avg_hss, var_hss, avg_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR
             ts(run_n) = max(ts1,ts2); % s, Settling time (use the later time) 
             
             % Kt calculation
-            u = mean([ mean(motor1), mean(motor2), mean(motor3), mean(motor4) ]);
-            kt(run_n) = (masses(test_n)*g) / (4*u);
+            u = mean([ abs(mean(motor1)), abs(mean(motor2)), abs(mean(motor3)), abs(mean(motor4)) ]);
+            kt(run_n) = (masses(test_n)*g) / (4*u) * 1000; % N
 
         end
 

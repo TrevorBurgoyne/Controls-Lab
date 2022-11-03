@@ -5,7 +5,7 @@
 ROOT_DIR = "C:/Users/Trevor/Desktop/AEM 4602W/Controls-Lab/Data/Part 2/";
 PREFIX = "sim_t";
 DISP_NAME = "No Added Mass";
-LABEL_NAME = "Sim";
+LABEL_NAME = "High Sim";
 N_TESTS = 6;
 N_RUNS = 1;
 masses = 69*ones(1,N_TESTS)/1000; % kg
