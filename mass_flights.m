@@ -8,4 +8,5 @@ DISP_NAME = "Added Mass";
 LABEL_NAME = "Run";
 N_TESTS = 2;
 N_RUNS = 2;
-[avg_hss, var_hss] = make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS)
+masses = [79.3, 80.6] / 1000; % kg
+[avg_hss, var_hss, avg_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS, masses)
