@@ -8,7 +8,8 @@ DISP_NAME = "No Added Mass";
 LABEL_NAME = "Run";
 N_TESTS = 3;
 N_RUNS = 2;
-make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS);
+masses = [68.1, 68, 69.5] / 1000; % kg
+[avg_hss, var_hss, avg_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS, masses)
 
 %% Plots
 

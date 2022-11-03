@@ -1,18 +1,26 @@
 %% Make graphs
 % Trevor Burgoyne 13 Nov 2022
 
-function make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS)
+function [avg_hss, var_hss, avg_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS, masses)
     COLORS = ["red", "blue", "green", "black"];
     T_START = 20; % s
-    T_STEADY = 30; % s
+    T_STEADY = 30; % s, Chosen as start of steady-state response from observation
     T_END = T_START+25; % s
     HREF = 1.25; % m
+    g = 9.81; % m/s^2
 
     % Plotting options
     font_size = 12;
     line_size = 15;
     line_width = 1;
-
+    avg_hss = zeros(1,N_TESTS);
+    var_hss = zeros(1,N_TESTS);
+    avg_kt  = zeros(1,N_TESTS);
+    kphat   = zeros(1,N_TESTS);
+    kdhat   = zeros(1,N_TESTS);
+    kp      = zeros(1,N_TESTS);
+    kd      = zeros(1,N_TESTS);
+%     var_kt  = zeros(1,N_TESTS);
     for test_n=1:N_TESTS
         ts = zeros(1,N_RUNS);
         kt = zeros(1,N_RUNS);
@@ -35,7 +43,7 @@ function make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS)
             plot(time,-z_est,'Linewidth',line_width,'Color',COLORS(run_n),'DisplayName',LABEL_NAME + " " + run_n);
 
             % Steady-state error
-            idxs = find(time >= T_STEADY & time <=T_END); % Idxs of steady state region
+            idxs = find(time >= T_STEADY & time <=T_END); % Indices of steady state region
             z_arr = -z_est(idxs); % Z values being investigated
             zs(run_n) = double(mean(z_arr)); % m, Experimental settling value
             hss(run_n) = zs(run_n) - HREF; % m, Steady state error   
@@ -62,6 +70,10 @@ function make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS)
             end
 
             ts(run_n) = max(ts1,ts2); % s, Settling time (use the later time) 
+            
+            % Kt calculation
+            u = mean([ mean(motor1), mean(motor2), mean(motor3), mean(motor4) ]);
+            kt(run_n) = (masses(test_n)*g) / (4*u);
 
         end
 
@@ -95,5 +107,13 @@ function make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS)
         xlim([T_START-1 T_END+1]);
         ylim([0.4 1.5]);
         grid on
+        
+        avg_hss(test_n) = mean(hss);
+        var_hss(test_n) = var(hss);
+        avg_kt(test_n)  = mean(kt);
+        kphat(test_n)   = Kp;
+        kdhat(test_n)   = Kd;
+        kp(test_n)      = Kp/(4*avg_kt(test_n));
+        kd(test_n)      = Kd/(4*avg_kt(test_n));
     end
 end

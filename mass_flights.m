@@ -8,4 +8,4 @@ DISP_NAME = "Added Mass";
 LABEL_NAME = "Run";
 N_TESTS = 2;
 N_RUNS = 2;
-make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS);
+[avg_hss, var_hss] = make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS)
