@@ -1,43 +1,14 @@
 %% Flight Experiments
-% Trevor Burgoyne 16 Oct 2022
+% Trevor Burgoyne 13 Nov 2022
 
 % Paths for data loading
-ROOT_DIR = "C:/Users/Trevor/Desktop/AEM 4602W/Controls-Lab/Data/";
-COLORS = ["red", "blue", "green", "black"];
+ROOT_DIR = "C:/Users/Trevor/Desktop/AEM 4602W/Controls-Lab/Data/Part 1/";
+PREFIX = "pjsdata_T";
+DISP_NAME = "No Added Mass";
+LABEL_NAME = "Run";
 N_TESTS = 3;
 N_RUNS = 2;
-T_START = 20; % s
-T_END = T_START+25; % s
-HREF = -1.25; % m
-
-% Plotting options
-font_size = 15;
-line_size = 15;
-line_width = 2;
-
-for test_n=1:N_TESTS
-    ts = zeros(1,N_RUNS);
-    kt = zeros(1,N_RUNS);
-    figure(test_n)
-    hold on
-    for run_n=1:N_RUNS
-        path = ROOT_DIR + "Part 1/pjsdata_T" + test_n + "R" + run_n + ".mat";
-        load(path);
-        if run_n == 1 % Only plot reference once
-            plot(time,-z_ref,'Linewidth',line_width,'Color',COLORS(4));
-        end
-        plot(time,-z_est,'Linewidth',line_width,'Color',COLORS(run_n));
-        
-        
-    end
-    title("Test " + test_n + " Estimated vs. Reference Position");
-    xlabel('Time (s)','fontsize',font_size);
-    ylabel('Altitude (m)','fontsize',font_size);
-    legend('z_{ref}','Run 1','Run 2','location','best');
-    set(gca,'XMinorGrid','off','GridLineStyle','-','FontSize',line_size)
-    xlim([0 time(end)]);
-    grid on
-end
+make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS);
 
 %% Plots
 
