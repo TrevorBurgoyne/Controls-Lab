@@ -80,6 +80,8 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     Cg = eye(2);
     Dg = 0;
     G = ss(Ag,Bg,Cg,Dg);
+    time = [];
+    h_arr = [];
 
     tstep = 1;   % Step time, sec
     % Controller: PI and D terms
@@ -142,16 +144,17 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     options = simset('SrcWorkspace','current'); 
     sim('QuadPID',[0 Tf],options);
 
-    % Plot results
+    %% Plot results
     font_size = 12;
     line_size = 15;
     line_width = 1;
-    
+    color = 'b';
+       
     figure();
     hold on
     text(T_STEADY,1,"w_{n} = " + wn + newline + "zeta = " + zeta);
     yline(hdesf,'Linewidth',line_width,'Color','black','DisplayName','z_{ref}')
-    plot(tsim+T_START,h,'Linewidth',line_width,'Color','b','DisplayName','Low Sim');
+    plot(tsim+T_START,h,'Linewidth',line_width,'Color',color,'DisplayName','Low Sim');
     title(sprintf('%s: $\\hat{K_{p}} = %s, \\hat{K_{d}} = %s$',DISP_NAME,num2str(Kphat),num2str(Kdhat)),'Interpreter','latex');
     xlabel('Time (s)','fontsize',font_size);
     ylabel('Altitude (m)','fontsize',font_size);
@@ -160,5 +163,34 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     xlim([T_START-1 T_END+1]);
     ylim([0.4 1.5]);
     grid on;
+    
+    % Settling Time
+    time  = [time tsim];
+    h_arr = [h_arr h]; 
+    if zeta < 1 % 0.1, Underdamped case
+        ts = 3/(zeta*wn);
+    else % Other cases
+        for j = 1:length(h_arr)
+            if (h_arr(j)/hdesf >= 0.95)
+                idx = j;
+                break;
+            end
+        end
+        ts = time(idx);
+    end
+    
+    line_name = "ts = " + (ts);
+    text(1.01*(ts+T_START),.6,line_name,'Color',color)
+    xline(ts+T_START,"--",'Linewidth',line_width,'Color',color,'HandleVisibility','off')
+    
+    % Steady-state error
+    idxs = find(time >= T_STEADY-T_START); % Indices of steady state region
+    z_arr = h_arr(idxs); % Z values being investigated
+    zs = double(mean(z_arr)); % m, Experimental settling value
+    hss = zs - hdesf; % m, Steady state error  
+    
+    line_name = "h_{ss} = " + hss;
+    text(T_STEADY,1.05*zs,line_name,'Color',color)
+    yline(zs,"--",'Linewidth',line_width,'Color',color,'HandleVisibility','off')
 
 end
