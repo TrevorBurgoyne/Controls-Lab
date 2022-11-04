@@ -1,7 +1,7 @@
 %% Make graphs
 % Trevor Burgoyne 13 Nov 2022
 
-function [avg_hss, var_hss, avg_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS, masses)
+function [avg_hss, var_hss, avg_kt, var_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR, PREFIX, DISP_NAME, LABEL_NAME, N_TESTS, N_RUNS, masses)
     COLORS = ["red", "blue", "green", "black"];
     T_START = 20; % s
     T_STEADY = 30; % s, Chosen as start of steady-state response from observation
@@ -16,11 +16,11 @@ function [avg_hss, var_hss, avg_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR
     avg_hss = zeros(1,N_TESTS);
     var_hss = zeros(1,N_TESTS);
     avg_kt  = zeros(1,N_TESTS);
+    var_kt  = zeros(1,N_TESTS);
     kphat   = zeros(1,N_TESTS);
     kdhat   = zeros(1,N_TESTS);
     kp      = zeros(1,N_TESTS);
     kd      = zeros(1,N_TESTS);
-%     var_kt  = zeros(1,N_TESTS);
     for test_n=1:N_TESTS
         ts = zeros(1,N_RUNS);
         kt = zeros(1,N_RUNS);
@@ -72,12 +72,13 @@ function [avg_hss, var_hss, avg_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR
             ts(run_n) = max(ts1,ts2); % s, Settling time (use the later time) 
             
             % Kt calculation
-            u = mean([ abs(mean(motor1)), abs(mean(motor2)), abs(mean(motor3)), abs(mean(motor4)) ]);
+            motors = abs([motor1' motor2' motor3' motor4']); % Get all motor values
+            u = mean(motors);
             kt(run_n) = (masses(test_n)*g) / (4*u) * 1000; % N
 
         end
 
-        scale = [1.05 0.95];
+        scale = [1.05 0.95]; % scalar values used to position text
         for run_n=1:N_RUNS
             % Steady-state error
             if zs(run_n) == max(zs) % Position labels above if the line is higher
@@ -111,6 +112,7 @@ function [avg_hss, var_hss, avg_kt, kphat, kdhat, kp, kd] = make_graphs(ROOT_DIR
         avg_hss(test_n) = mean(hss);
         var_hss(test_n) = var(hss);
         avg_kt(test_n)  = mean(kt);
+        var_kt(test_n)  = var(kt);
         kphat(test_n)   = Kp;
         kdhat(test_n)   = Kd;
         kp(test_n)      = Kp/(4*avg_kt(test_n));

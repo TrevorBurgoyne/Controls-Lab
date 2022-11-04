@@ -4,27 +4,25 @@
 function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     %% Vehicle Parameters
     % close all; clear all;
-%     m = 65e-3;              % Mass, kg
+    % m = 65e-3;              % Mass, kg
     T_START = 20; % s
     T_STEADY = 30; % s, Chosen as start of steady-state response from observation
     T_END = T_START+25; % s
-    g = 9.81;               % Gravitational constant, m/s^2
-    % kT = ;          % Thrust coefficient, N
+    g = 9.81; % m/s^2
+    % kT = ; % Thrust coefficient, N
     % kT = input('Enter the estimated thrust coefficient, N, kT: ');
-    umax = 500;             % Maximum motor input command, unitless
-    umin = 0;               % Minimum motor input command, unitless
+    umax = 500; % Maximum motor input command, unitless
+    umin = 0; % Minimum motor input command, unitless
 
 
     %% Step change in altitude reference, m
-    Tf = 25;            % Final simulation time, sec
+    Tf    = 25;           % Final simulation time, sec
     hdes0 = 0.7;          % Initial altitude, m
     hdesf = 1.25;         % Final altitude, m
 
     %% Initial Conditions
     h0 = hdes0;        % Initial altitude, m
     hdot0 = 0;         % Initial altitude velocity, m/s
-
-    %%
     hddmax = (4*kT*umax-m*g)/m;    % Maximum upward acceleration, m/s^2
 
 
@@ -44,7 +42,6 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     % set to zero to simply to the PD control given above.
 
     % Select Gains -- Gains are specified using simplified second order model
-    %
 
     GainCase = 2;
     switch GainCase
@@ -61,8 +58,8 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
             Ki = 0;
 
         case 2
-    %         Kp = input('Enter the proportional gain, Kp: ');
-    %         Kd = input('Enter the derivative gain, Kd: ');
+            % Kp = input('Enter the proportional gain, Kp: ');
+            % Kd = input('Enter the derivative gain, Kd: ');
             Ki = 0;
 
             wn = sqrt(Kp*4*kT/m);
@@ -140,7 +137,9 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
 
     % Simulate system
     
-    options = simset('SrcWorkspace','current')
+    % Allow sim to be called as a function
+    % and have proper variable scope
+    options = simset('SrcWorkspace','current'); 
     sim('QuadPID',[0 Tf],options);
 
     % Plot results
@@ -160,18 +159,6 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     set(gca,'XMinorGrid','off','GridLineStyle','-','FontSize',line_size)
     xlim([T_START-1 T_END+1]);
     ylim([0.4 1.5]);
-
     grid on;
 
-    % figure(2);
-    % plot(tsim,hdot,'b');
-    % xlabel('Time, sec');
-    % ylabel('Altitude Velocity, m/s');
-    % grid on;
-    % 
-    % figure(3);
-    % plot(tsim,u,'b');
-    % xlabel('Time, sec');
-    % ylabel('Motor Command, unitless');
-    % grid on;
 end
