@@ -5,7 +5,7 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     %% Vehicle Parameters
     % close all; clear all;
     % m = 65e-3;              % Mass, kg
-    T_START = 20; % s
+    T_START = 19; % s
     T_STEADY = 30; % s, Chosen as start of steady-state response from observation
     T_END = T_START+25; % s
     g = 9.81; % m/s^2
@@ -160,28 +160,15 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     ylabel('Altitude (m)','fontsize',font_size);
     legend('show','Location','best');
     set(gca,'XMinorGrid','off','GridLineStyle','-','FontSize',line_size)
-    xlim([T_START-1 T_END+1]);
+    xlim([T_START T_END+1]);
     ylim([0.4 1.5]);
     grid on;
     
-    % Settling Time
+
+    
+    
     time  = [time tsim];
     h_arr = [h_arr h]; 
-    if zeta < 1 % 0.1, Underdamped case
-        ts = 3/(zeta*wn);
-    else % Other cases
-        for j = 1:length(h_arr)
-            if (h_arr(j)/hdesf >= 0.95)
-                idx = j;
-                break;
-            end
-        end
-        ts = time(idx);
-    end
-    
-    line_name = "ts = " + (ts);
-    text(1.01*(ts+T_START),.6,line_name,'Color',color)
-    xline(ts+T_START,"--",'Linewidth',line_width,'Color',color,'HandleVisibility','off')
     
     % Steady-state error
     idxs = find(time >= T_STEADY-T_START); % Indices of steady state region
@@ -192,5 +179,42 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     line_name = "h_{ss} = " + hss;
     text(T_STEADY,1.05*zs,line_name,'Color',color)
     yline(zs,"--",'Linewidth',line_width,'Color',color,'HandleVisibility','off')
+    
+    % Settling Time
+    if zeta < 0.88 % Underdamped case
+        ts = 3/(zeta*wn);
+    else % Other cases
+%         for j = 1:length(h_arr)
+%             if (h_arr(j)/hdesf >= 0.95)
+%                 idx = j;
+%                 break;
+%             end
+%         end
+%         ts = time(idx);
+
+        % Find last time z dipped below 95% of z_settle
+        ts_idxs = find(h_arr <= 0.95*zs);
+        if isempty(ts_idxs)
+            ts1 = 0;
+        else
+            ts1 = time(ts_idxs(end));
+        end
+
+        % Find last time z rose above 105% of z_settle
+        ts_idxs = find(h_arr >= 1.05*zs);
+        if isempty(ts_idxs)
+            ts2 = 0;
+        else
+            ts2 = time(ts_idxs(end));
+        end
+
+        ts = max(ts1,ts2); % s, Settling time (use the later time)
+    end
+    
+    line_name = "ts = " + (ts-1);
+    text(1.01*(ts+T_START),.6,line_name,'Color',color)
+    xline(ts+T_START,"--",'Linewidth',line_width,'Color',color,'HandleVisibility','off')
+    
+    
 
 end
