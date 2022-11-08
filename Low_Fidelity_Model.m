@@ -181,35 +181,30 @@ function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
     yline(zs,"--",'Linewidth',line_width,'Color',color,'HandleVisibility','off')
     
     % Settling Time
-    if zeta < 0.88 % Underdamped case
+    if zeta < 0.5 % Underdamped case
         ts = 3/(zeta*wn);
-    else % Other cases
-%         for j = 1:length(h_arr)
-%             if (h_arr(j)/hdesf >= 0.95)
-%                 idx = j;
-%                 break;
-%             end
-%         end
-%         ts = time(idx);
-
-        % Find last time z dipped below 95% of z_settle
-        ts_idxs = find(h_arr <= 0.95*zs);
-        if isempty(ts_idxs)
-            ts1 = 0;
-        else
-            ts1 = time(ts_idxs(end));
-        end
-
-        % Find last time z rose above 105% of z_settle
-        ts_idxs = find(h_arr >= 1.05*zs);
-        if isempty(ts_idxs)
-            ts2 = 0;
-        else
-            ts2 = time(ts_idxs(end));
-        end
-
-        ts = max(ts1,ts2); % s, Settling time (use the later time)
+        line_name = "ts = " + (ts-1) + " (theory)";
+        text(1.01*(ts+T_START),.6,line_name,'Color','r')
+        xline(ts+T_START,"--",'Linewidth',line_width,'Color','r','HandleVisibility','off')
     end
+    
+    % Find last time z dipped below 95% of z_settle
+    ts_idxs = find(h_arr <= 0.95*zs);
+    if isempty(ts_idxs)
+        ts1 = 0;
+    else
+        ts1 = time(ts_idxs(end));
+    end
+
+    % Find last time z rose above 105% of z_settle
+    ts_idxs = find(h_arr >= 1.05*zs);
+    if isempty(ts_idxs)
+        ts2 = 0;
+    else
+        ts2 = time(ts_idxs(end));
+    end
+
+    ts = max(ts1,ts2); % s, Settling time (use the later time)
     
     line_name = "ts = " + (ts-1);
     text(1.01*(ts+T_START),.6,line_name,'Color',color)
