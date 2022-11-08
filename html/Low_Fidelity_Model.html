@@ -1,0 +1,457 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Low_Fidelity_Model</title><meta name="generator" content="MATLAB 9.9"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-11-07"><meta name="DC.source" content="Low_Fidelity_Model.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">PID Control of Quadcopter Altitude Near Hover</a></li><li><a href="#2">Vehicle Parameters</a></li><li><a href="#3">Step change in altitude reference, m</a></li><li><a href="#4">Initial Conditions</a></li><li><a href="#5">PD Control With Gravity Feedforward</a></li><li><a href="#6">Closed-Loop Transfer Function (hdes to h)</a></li><li><a href="#7">Convert Gains</a></li><li><a href="#8">Simulate Closed-Loop</a></li><li><a href="#9">Plot results</a></li></ul></div><h2 id="1">PID Control of Quadcopter Altitude Near Hover</h2><p>Acknowledgement: Prof. Peter Seiler</p><pre class="codeinput"><span class="comment">%-------------------------------------------------</span>
+<span class="keyword">function</span> [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
+</pre><h2 id="2">Vehicle Parameters</h2><p>close all; clear all; m = 65e-3;              % Mass, kg</p><pre class="codeinput">    T_START = 19; <span class="comment">% s</span>
+    T_STEADY = 30; <span class="comment">% s, Chosen as start of steady-state response from observation</span>
+    T_END = T_START+25; <span class="comment">% s</span>
+    g = 9.81; <span class="comment">% m/s^2</span>
+    <span class="comment">% kT = ; % Thrust coefficient, N</span>
+    <span class="comment">% kT = input('Enter the estimated thrust coefficient, N, kT: ');</span>
+    umax = 500; <span class="comment">% Maximum motor input command, unitless</span>
+    umin = 0; <span class="comment">% Minimum motor input command, unitless</span>
+</pre><h2 id="3">Step change in altitude reference, m</h2><pre class="codeinput">    Tf    = 25;           <span class="comment">% Final simulation time, sec</span>
+    hdes0 = 0.7;          <span class="comment">% Initial altitude, m</span>
+    hdesf = 1.25;         <span class="comment">% Final altitude, m</span>
+</pre><h2 id="4">Initial Conditions</h2><pre class="codeinput">    h0 = hdes0;        <span class="comment">% Initial altitude, m</span>
+    hdot0 = 0;         <span class="comment">% Initial altitude velocity, m/s</span>
+    hddmax = (4*kT*umax-m*g)/m;    <span class="comment">% Maximum upward acceleration, m/s^2</span>
+</pre><pre class="codeoutput error">Not enough input arguments.
+
+Error in Low_Fidelity_Model (line 26)
+    hddmax = (4*kT*umax-m*g)/m;    % Maximum upward acceleration, m/s^2
+</pre><h2 id="5">PD Control With Gravity Feedforward</h2><p>Consider the following PD control law with gravity feedforward    u = Kp*(hdes-h) - Kd*hdot + (mhat*g)/(4*kThat) Here u is the <b>*individual motor command</b>* input (unitless).  Also, (mhat,kThat) indicate that these are estimates used by the controller. The parrot drone Simulink diagram uses:5    uhat = Kphat*(hdes-h) - Kdhat*hdot + mhat*g where uhat is the <b>*total thrust</b>* command (N).  These are related by    uhat = (4*kT)*u Thus gains computed using the simplified second-order model must be scaled by (4*kT) before implementing in the parrot Simulink diagram.</p><p>NOTE - An integral gain is included below for testing but this can be set to zero to simply to the PD control given above.</p><pre class="codeinput">    <span class="comment">% Select Gains -- Gains are specified using simplified second order model</span>
+
+    GainCase = 2;
+    <span class="keyword">switch</span> GainCase
+        <span class="keyword">case</span> 1
+            <span class="comment">% Select closed-loop natural frequency and damping ratio</span>
+            wn = input(<span class="string">'Desired natural freq, rad/sec, wn: '</span>);      <span class="comment">% Desired natural freq, rad/sec</span>
+            zeta = input(<span class="string">'Desired damping ratio, unitless, zeta: '</span> );  <span class="comment">% Desired damping ratio, unitless</span>
+
+            <span class="comment">% Closed-loop ODE with PD control + perfect gravity cancellation:</span>
+            <span class="comment">%   m hdd = (4*kT)*( Kp*(hdes-h) - Kd*hdot )</span>
+            <span class="comment">% --&gt; hdd + (4*kT*Kd/m) hdot + (4*kT*Kp/m) h = (4*kT*Kp/m)*hdes</span>
+            Kp = wn^2*m/(4*kT);
+            Kd = 2*zeta*wn*m/(4*kT);
+            Ki = 0;
+
+        <span class="keyword">case</span> 2
+            <span class="comment">% Kp = input('Enter the proportional gain, Kp: ');</span>
+            <span class="comment">% Kd = input('Enter the derivative gain, Kd: ');</span>
+            Ki = 0;
+
+            wn = sqrt(Kp*4*kT/m);
+            zeta = 4*kT*Kd/(2*wn*m);
+    <span class="keyword">end</span>
+</pre><h2 id="6">Closed-Loop Transfer Function (hdes to h)</h2><p>This constructs the closed-loop model from altitude reference to altitude. It assumes perfect cancellation of the gravitational force by the feedforward term. It also neglects the saturation that limits the motor command.</p><pre class="codeinput">    <span class="comment">% Plant dynamcs (neglecting gravity term)</span>
+    <span class="comment">%   m d^2(h)/dt^2 = (4*kT)*u</span>
+    <span class="comment">% The state-space model below has input motor command and outputs [h;hdot]</span>
+    Ag = [0 1; 0 0];
+    Bg = [0; 4*kT/m];
+    Cg = eye(2);
+    Dg = 0;
+    G = ss(Ag,Bg,Cg,Dg);
+    time = [];
+    h_arr = [];
+
+    tstep = 1;   <span class="comment">% Step time, sec</span>
+    <span class="comment">% Controller: PI and D terms</span>
+    <span class="keyword">if</span> Ki==0
+        Cpi = ss(Kp);
+    <span class="keyword">else</span>
+        Cpi = tf([Kp Ki],[1 0]);
+    <span class="keyword">end</span>
+    Cd = ss(Kd);
+
+    <span class="comment">% Form closed-loop from r to h, T</span>
+    systemnames = <span class="string">'G Cpi Cd'</span>;
+    inputvar = <span class="string">'[r]'</span>;
+    outputvar = <span class="string">'[G(1)]'</span>;
+    input_to_G = <span class="string">'[Cpi+Cd]'</span>;
+    input_to_Cpi = <span class="string">'[r-G(1)]'</span>;
+    input_to_Cd = <span class="string">'[-G(2)]'</span>;
+    <span class="comment">%T = sysic;</span>
+
+    <span class="keyword">if</span> false
+        <span class="comment">% Code to debug:  Represent controller</span>
+        <span class="comment">% (*)  u = Kp e + Kd edot + Ki integral(e)</span>
+        <span class="comment">% The actual implementation only uses rate-feedback, i.e. Kd*edot is</span>
+        <span class="comment">% replaced by -Kd*hdot.  However, the form in (*) above is much easier</span>
+        <span class="comment">% to construct with standard functions and will yield the same poles</span>
+        <span class="comment">% (only the closed-loop zeros will be different)</span>
+        Gb = tf(4*kT/m,[1 0 0]);
+        <span class="keyword">if</span> Ki==0
+            Cpid = tf([Kd Kp],1);
+        <span class="keyword">else</span>
+            Cpid = tf([Kd Kp Ki],[1 0]);
+        <span class="keyword">end</span>
+        Tb = feedback(Gb*Cpid,1);
+    <span class="keyword">end</span>
+</pre><h2 id="7">Convert Gains</h2><p>There are two sets of gains: 1) (Kd,Kp,Ki) for simple second order model with motor command input 2) (Kdhat,Kphat,Kihat) for parrot drone simulink model with total    thrust command input. These are the gains that should be used in the    parrot drone Simulink model.</p><pre class="codeinput">    Kdhat = (4*kT)*Kd;
+    Kphat = (4*kT)*Kp;
+    Kihat = (4*kT)*Ki;
+</pre><h2 id="8">Simulate Closed-Loop</h2><pre class="codeinput">    <span class="comment">% Parameter estimates</span>
+    mhat = m;
+    kThat = kT;
+
+    <span class="comment">% Disturbance Force, N</span>
+    Fd = 0;
+
+    <span class="comment">% Simulate system</span>
+
+    <span class="comment">% Allow sim to be called as a function</span>
+    <span class="comment">% and have proper variable scope</span>
+    options = simset(<span class="string">'SrcWorkspace'</span>,<span class="string">'current'</span>);
+    sim(<span class="string">'QuadPID'</span>,[0 Tf],options);
+</pre><h2 id="9">Plot results</h2><pre class="codeinput">    font_size = 12;
+    line_size = 15;
+    line_width = 1;
+    color = <span class="string">'b'</span>;
+
+    figure();
+    hold <span class="string">on</span>
+    text(T_STEADY,1,<span class="string">"w_{n} = "</span> + wn + newline + <span class="string">"zeta = "</span> + zeta);
+    yline(hdesf,<span class="string">'Linewidth'</span>,line_width,<span class="string">'Color'</span>,<span class="string">'black'</span>,<span class="string">'DisplayName'</span>,<span class="string">'z_{ref}'</span>)
+    plot(tsim+T_START,h,<span class="string">'Linewidth'</span>,line_width,<span class="string">'Color'</span>,color,<span class="string">'DisplayName'</span>,<span class="string">'Low Sim'</span>);
+    title(sprintf(<span class="string">'%s: $\\hat{K_{p}} = %s, \\hat{K_{d}} = %s$'</span>,DISP_NAME,num2str(Kphat),num2str(Kdhat)),<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
+    xlabel(<span class="string">'Time (s)'</span>,<span class="string">'fontsize'</span>,font_size);
+    ylabel(<span class="string">'Altitude (m)'</span>,<span class="string">'fontsize'</span>,font_size);
+    legend(<span class="string">'show'</span>,<span class="string">'Location'</span>,<span class="string">'best'</span>);
+    set(gca,<span class="string">'XMinorGrid'</span>,<span class="string">'off'</span>,<span class="string">'GridLineStyle'</span>,<span class="string">'-'</span>,<span class="string">'FontSize'</span>,line_size)
+    xlim([T_START T_END+1]);
+    ylim([0.4 1.5]);
+    grid <span class="string">on</span>;
+
+
+
+
+    time  = [time tsim];
+    h_arr = [h_arr h];
+
+    <span class="comment">% Steady-state error</span>
+    idxs = find(time &gt;= T_STEADY-T_START); <span class="comment">% Indices of steady state region</span>
+    z_arr = h_arr(idxs); <span class="comment">% Z values being investigated</span>
+    zs = double(mean(z_arr)); <span class="comment">% m, Experimental settling value</span>
+    hss = zs - hdesf; <span class="comment">% m, Steady state error</span>
+
+    line_name = <span class="string">"h_{ss} = "</span> + hss;
+    text(T_STEADY,1.05*zs,line_name,<span class="string">'Color'</span>,color)
+    yline(zs,<span class="string">"--"</span>,<span class="string">'Linewidth'</span>,line_width,<span class="string">'Color'</span>,color,<span class="string">'HandleVisibility'</span>,<span class="string">'off'</span>)
+
+    <span class="comment">% Settling Time</span>
+    <span class="keyword">if</span> zeta &lt; 0.5 <span class="comment">% Underdamped case</span>
+        ts = 3/(zeta*wn);
+        line_name = <span class="string">"ts = "</span> + (ts-1) + <span class="string">" (theory)"</span>;
+        text(1.01*(ts+T_START),.6,line_name,<span class="string">'Color'</span>,<span class="string">'r'</span>)
+        xline(ts+T_START,<span class="string">"--"</span>,<span class="string">'Linewidth'</span>,line_width,<span class="string">'Color'</span>,<span class="string">'r'</span>,<span class="string">'HandleVisibility'</span>,<span class="string">'off'</span>)
+    <span class="keyword">end</span>
+
+    <span class="comment">% Find last time z dipped below 95% of z_settle</span>
+    ts_idxs = find(h_arr &lt;= 0.95*zs);
+    <span class="keyword">if</span> isempty(ts_idxs)
+        ts1 = 0;
+    <span class="keyword">else</span>
+        ts1 = time(ts_idxs(end));
+    <span class="keyword">end</span>
+
+    <span class="comment">% Find last time z rose above 105% of z_settle</span>
+    ts_idxs = find(h_arr &gt;= 1.05*zs);
+    <span class="keyword">if</span> isempty(ts_idxs)
+        ts2 = 0;
+    <span class="keyword">else</span>
+        ts2 = time(ts_idxs(end));
+    <span class="keyword">end</span>
+
+    ts = max(ts1,ts2); <span class="comment">% s, Settling time (use the later time)</span>
+
+    line_name = <span class="string">"ts = "</span> + (ts-1);
+    text(1.01*(ts+T_START),.6,line_name,<span class="string">'Color'</span>,color)
+    xline(ts+T_START,<span class="string">"--"</span>,<span class="string">'Linewidth'</span>,line_width,<span class="string">'Color'</span>,color,<span class="string">'HandleVisibility'</span>,<span class="string">'off'</span>)
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% PID Control of Quadcopter Altitude Near Hover
+% Acknowledgement: Prof. Peter Seiler
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+function [wn, zeta] = Low_Fidelity_Model(DISP_NAME, m, kT, Kp, Kd)
+    %% Vehicle Parameters
+    % close all; clear all;
+    % m = 65e-3;              % Mass, kg
+    T_START = 19; % s
+    T_STEADY = 30; % s, Chosen as start of steady-state response from observation
+    T_END = T_START+25; % s
+    g = 9.81; % m/s^2
+    % kT = ; % Thrust coefficient, N
+    % kT = input('Enter the estimated thrust coefficient, N, kT: ');
+    umax = 500; % Maximum motor input command, unitless
+    umin = 0; % Minimum motor input command, unitless
+
+
+    %% Step change in altitude reference, m
+    Tf    = 25;           % Final simulation time, sec
+    hdes0 = 0.7;          % Initial altitude, m
+    hdesf = 1.25;         % Final altitude, m
+
+    %% Initial Conditions
+    h0 = hdes0;        % Initial altitude, m
+    hdot0 = 0;         % Initial altitude velocity, m/s
+    hddmax = (4*kT*umax-m*g)/m;    % Maximum upward acceleration, m/s^2
+
+
+    %% PD Control With Gravity Feedforward
+    % Consider the following PD control law with gravity feedforward
+    %    u = Kp*(hdes-h) - Kd*hdot + (mhat*g)/(4*kThat)
+    % Here u is the **individual motor command** input (unitless).  Also,
+    % (mhat,kThat) indicate that these are estimates used by the controller.
+    % The parrot drone Simulink diagram uses:5
+    %    uhat = Kphat*(hdes-h) - Kdhat*hdot + mhat*g
+    % where uhat is the **total thrust** command (N).  These are related by
+    %    uhat = (4*kT)*u
+    % Thus gains computed using the simplified second-order model must be
+    % scaled by (4*kT) before implementing in the parrot Simulink diagram.
+    %
+    % NOTE - An integral gain is included below for testing but this can be
+    % set to zero to simply to the PD control given above.
+
+    % Select Gains REPLACE_WITH_DASH_DASH Gains are specified using simplified second order model
+
+    GainCase = 2;
+    switch GainCase
+        case 1
+            % Select closed-loop natural frequency and damping ratio
+            wn = input('Desired natural freq, rad/sec, wn: ');      % Desired natural freq, rad/sec
+            zeta = input('Desired damping ratio, unitless, zeta: ' );  % Desired damping ratio, unitless
+
+            % Closed-loop ODE with PD control + perfect gravity cancellation:
+            %   m hdd = (4*kT)*( Kp*(hdes-h) - Kd*hdot )
+            % REPLACE_WITH_DASH_DASH> hdd + (4*kT*Kd/m) hdot + (4*kT*Kp/m) h = (4*kT*Kp/m)*hdes
+            Kp = wn^2*m/(4*kT);
+            Kd = 2*zeta*wn*m/(4*kT);
+            Ki = 0;
+
+        case 2
+            % Kp = input('Enter the proportional gain, Kp: ');
+            % Kd = input('Enter the derivative gain, Kd: ');
+            Ki = 0;
+
+            wn = sqrt(Kp*4*kT/m);
+            zeta = 4*kT*Kd/(2*wn*m);
+    end
+
+    %% Closed-Loop Transfer Function (hdes to h)
+    % This constructs the closed-loop model from altitude reference to
+    % altitude. It assumes perfect cancellation of the gravitational force
+    % by the feedforward term. It also neglects the saturation that limits
+    % the motor command.
+
+    % Plant dynamcs (neglecting gravity term)
+    %   m d^2(h)/dt^2 = (4*kT)*u
+    % The state-space model below has input motor command and outputs [h;hdot]
+    Ag = [0 1; 0 0];
+    Bg = [0; 4*kT/m];
+    Cg = eye(2);
+    Dg = 0;
+    G = ss(Ag,Bg,Cg,Dg);
+    time = [];
+    h_arr = [];
+
+    tstep = 1;   % Step time, sec
+    % Controller: PI and D terms
+    if Ki==0
+        Cpi = ss(Kp);
+    else
+        Cpi = tf([Kp Ki],[1 0]);
+    end
+    Cd = ss(Kd);
+
+    % Form closed-loop from r to h, T
+    systemnames = 'G Cpi Cd';
+    inputvar = '[r]';
+    outputvar = '[G(1)]';
+    input_to_G = '[Cpi+Cd]';
+    input_to_Cpi = '[r-G(1)]';
+    input_to_Cd = '[-G(2)]';
+    %T = sysic;
+
+    if false
+        % Code to debug:  Represent controller
+        % (*)  u = Kp e + Kd edot + Ki integral(e)
+        % The actual implementation only uses rate-feedback, i.e. Kd*edot is
+        % replaced by -Kd*hdot.  However, the form in (*) above is much easier
+        % to construct with standard functions and will yield the same poles
+        % (only the closed-loop zeros will be different)
+        Gb = tf(4*kT/m,[1 0 0]);
+        if Ki==0
+            Cpid = tf([Kd Kp],1);
+        else
+            Cpid = tf([Kd Kp Ki],[1 0]);
+        end
+        Tb = feedback(Gb*Cpid,1);
+    end
+    %% Convert Gains
+    % There are two sets of gains:
+    % 1) (Kd,Kp,Ki) for simple second order model with motor command input
+    % 2) (Kdhat,Kphat,Kihat) for parrot drone simulink model with total
+    %    thrust command input. These are the gains that should be used in the
+    %    parrot drone Simulink model.
+
+    Kdhat = (4*kT)*Kd;
+    Kphat = (4*kT)*Kp;
+    Kihat = (4*kT)*Ki;
+
+
+    %% Simulate Closed-Loop
+
+    % Parameter estimates
+    mhat = m;
+    kThat = kT;
+
+    % Disturbance Force, N
+    Fd = 0;
+
+    % Simulate system
+    
+    % Allow sim to be called as a function
+    % and have proper variable scope
+    options = simset('SrcWorkspace','current'); 
+    sim('QuadPID',[0 Tf],options);
+
+    %% Plot results
+    font_size = 12;
+    line_size = 15;
+    line_width = 1;
+    color = 'b';
+       
+    figure();
+    hold on
+    text(T_STEADY,1,"w_{n} = " + wn + newline + "zeta = " + zeta);
+    yline(hdesf,'Linewidth',line_width,'Color','black','DisplayName','z_{ref}')
+    plot(tsim+T_START,h,'Linewidth',line_width,'Color',color,'DisplayName','Low Sim');
+    title(sprintf('%s: $\\hat{K_{p}} = %s, \\hat{K_{d}} = %s$',DISP_NAME,num2str(Kphat),num2str(Kdhat)),'Interpreter','latex');
+    xlabel('Time (s)','fontsize',font_size);
+    ylabel('Altitude (m)','fontsize',font_size);
+    legend('show','Location','best');
+    set(gca,'XMinorGrid','off','GridLineStyle','-','FontSize',line_size)
+    xlim([T_START T_END+1]);
+    ylim([0.4 1.5]);
+    grid on;
+    
+
+    
+    
+    time  = [time tsim];
+    h_arr = [h_arr h]; 
+    
+    % Steady-state error
+    idxs = find(time >= T_STEADY-T_START); % Indices of steady state region
+    z_arr = h_arr(idxs); % Z values being investigated
+    zs = double(mean(z_arr)); % m, Experimental settling value
+    hss = zs - hdesf; % m, Steady state error  
+    
+    line_name = "h_{ss} = " + hss;
+    text(T_STEADY,1.05*zs,line_name,'Color',color)
+    yline(zs,"REPLACE_WITH_DASH_DASH",'Linewidth',line_width,'Color',color,'HandleVisibility','off')
+    
+    % Settling Time
+    if zeta < 0.5 % Underdamped case
+        ts = 3/(zeta*wn);
+        line_name = "ts = " + (ts-1) + " (theory)";
+        text(1.01*(ts+T_START),.6,line_name,'Color','r')
+        xline(ts+T_START,"REPLACE_WITH_DASH_DASH",'Linewidth',line_width,'Color','r','HandleVisibility','off')
+    end
+    
+    % Find last time z dipped below 95% of z_settle
+    ts_idxs = find(h_arr <= 0.95*zs);
+    if isempty(ts_idxs)
+        ts1 = 0;
+    else
+        ts1 = time(ts_idxs(end));
+    end
+
+    % Find last time z rose above 105% of z_settle
+    ts_idxs = find(h_arr >= 1.05*zs);
+    if isempty(ts_idxs)
+        ts2 = 0;
+    else
+        ts2 = time(ts_idxs(end));
+    end
+
+    ts = max(ts1,ts2); % s, Settling time (use the later time)
+    
+    line_name = "ts = " + (ts-1);
+    text(1.01*(ts+T_START),.6,line_name,'Color',color)
+    xline(ts+T_START,"REPLACE_WITH_DASH_DASH",'Linewidth',line_width,'Color',color,'HandleVisibility','off')
+    
+    
+
+end
+##### SOURCE END #####
+--></body></html>
